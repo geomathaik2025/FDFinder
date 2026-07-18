@@ -612,7 +612,7 @@
     const sakhi = gender === 'female';
 
     if(tenure === 'newyear'){
-      if(bookingDate >= WINDOW_START){
+      if(bookingDate >= WINDOW_START && bookingDate <= WINDOW_END){
         let rate = NEWYEAR_BASE_RATE;
         if(senior) rate *= NEWYEAR_SENIOR_MULTIPLIER;
         if(sakhi) rate *= NEWYEAR_SAKHI_MULTIPLIER;
