@@ -618,6 +618,11 @@
         if(sakhi) rate *= NEWYEAR_SAKHI_MULTIPLIER;
         return rate;
       } else {
+        let rate = NEWYEAR_FALLBACK_BASE_RATE;
+        if(senior) rate += SENIOR_ADD;
+        if(sakhi) rate += SAKHI_ADD;
+        return rate;
+      } else {
         let rate = BASE_RATE_1YR;
         if(senior) rate += SENIOR_ADD;
         if(sakhi) rate += SAKHI_ADD;
