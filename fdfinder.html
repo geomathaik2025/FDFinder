@@ -580,28 +580,12 @@
   let gender = 'male';
   let tenure = '1yr'; // '1yr' | 'newyear'
 
-  // ---- Rate card constants ----
-  // Standard 1-year base rate. Per GeoBANK's Fixed Deposit Interest Rate Policy
-  // (GB/RLD/FD-IRP/2026-03, Section 5), a deposit of exactly 365 days belongs in the
-  // "1 Year (365 days) - below 2 Years" bucket, which is rated separately from the
-  // adjacent "271-364 days" bucket.
-  const BASE_RATE_1YR = 6.75;
-  const SENIOR_ADD = 0.50;   // Senior Citizen (age >= 60), Section 6
-  const SAKHI_ADD = 0.10;    // GeoBANK SakhiSecure (woman depositor, tenure >= 1 year), Section 6
-
-  // New Year Sale promotional scheme (GB/RLD/FD-PROMO/2026-07).
-  // Within the window: base rate x1.25 for senior citizens, x1.25 for SakhiSecure-eligible
-  // women (stacking multiplicatively if both apply), rather than the standard product's
-  // flat percentage-point additions - a deliberately different, bigger differential to
-  // make the promo genuinely vary by profile instead of quoting one flat number to everyone.
-  const NEWYEAR_BASE_RATE = 7.60;
-  const NEWYEAR_SENIOR_MULTIPLIER = 1.25;
-  const NEWYEAR_SAKHI_MULTIPLIER = 1.25;
-  // Outside the window: falls back to the standard 1-year rate card (its own constant,
-  // independent of BASE_RATE_1YR, so this scenario's bug stays isolated from the other one).
-  const NEWYEAR_FALLBACK_BASE_RATE = 6.75;
-  const WINDOW_START = '2027-01-01';
-  const WINDOW_END = '2027-01-31';
+  // All rate/date policy values live in config.json, fetched at load time - this file
+  // contains only the fixed application logic, which should not need to change for
+  // ordinary policy updates (a new rate, an amended promo window, etc). Those are data
+  // changes, made in config.json; the comparison/calculation logic below is written to be
+  // correct and complete once, including checking BOTH bounds of the promotional window.
+  let CONFIG = null;
 
   function formatINR(num){
     return '₹' + Number(num).toLocaleString('en-IN', {maximumFractionDigits: 2, minimumFractionDigits: 0});
@@ -610,24 +594,18 @@
   function getRate(gender, age, tenure, bookingDate){
     const senior = age >= 60;
     const sakhi = gender === 'female';
+    const ny = CONFIG.newYearSale;
 
-    if(tenure === 'newyear'){
-      if(bookingDate >= WINDOW_START){
-        let rate = NEWYEAR_BASE_RATE;
-        if(senior) rate *= NEWYEAR_SENIOR_MULTIPLIER;
-        if(sakhi) rate *= NEWYEAR_SAKHI_MULTIPLIER;
-        return rate;
-      } else {
-        let rate = BASE_RATE_1YR;
-        if(senior) rate += SENIOR_ADD;
-        if(sakhi) rate += SAKHI_ADD;
-        return rate;
-      }
+    if(tenure === 'newyear' && bookingDate >= ny.windowStart && bookingDate <= ny.windowEnd){
+      let rate = ny.baseRate;
+      if(senior) rate *= ny.seniorMultiplier;
+      if(sakhi) rate *= ny.sakhiMultiplier;
+      return rate;
     }
 
-    let rate = BASE_RATE_1YR;
-    if(senior) rate += SENIOR_ADD;
-    if(sakhi) rate += SAKHI_ADD;
+    let rate = CONFIG.baseRate1Yr;
+    if(senior) rate += CONFIG.seniorAdd;
+    if(sakhi) rate += CONFIG.sakhiAdd;
     return rate;
   }
 
@@ -654,7 +632,7 @@
     const newYearTbody = document.getElementById('rate-table-newyear-body');
     newYearTbody.innerHTML = '';
     RATE_TABLE_ROWS.forEach(row => {
-      const rate = getRate(row.gender, row.sampleAge, 'newyear', WINDOW_START);
+      const rate = getRate(row.gender, row.sampleAge, 'newyear', CONFIG.newYearSale.windowStart);
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${row.genderLabel}</td><td>${row.ageBand}</td><td class="rate-val">${rate.toFixed(2)}%</td>`;
       newYearTbody.appendChild(tr);
@@ -678,7 +656,8 @@
 
     let tenureClause;
     if(tenure === 'newyear'){
-      const withinWindow = bookingDate >= WINDOW_START;
+      const ny = CONFIG.newYearSale;
+      const withinWindow = bookingDate >= ny.windowStart && bookingDate <= ny.windowEnd;
       tenureClause = withinWindow
         ? `On a New Year Sale deposit booked ${bookingDate}, within the promotional window, `
         : `On a deposit booked ${bookingDate}, outside the New Year Sale promotional window, `;
@@ -693,6 +672,8 @@
   }
 
   function recalc(){
+    if(!CONFIG) return;
+
     let age = parseInt(ageInput.value, 10);
     if(isNaN(age) || age < 18) age = 18;
     if(age > 110) age = 110;
@@ -700,7 +681,7 @@
     let principal = parseFloat(amountInput.value);
     if(isNaN(principal) || principal < 1000) principal = 1000;
 
-    const bookingDate = bookingDateInput.value || WINDOW_START;
+    const bookingDate = bookingDateInput.value || CONFIG.newYearSale.windowStart;
 
     const rate = getRate(gender, age, tenure, bookingDate);
     const interest = principal * (rate / 100);
@@ -761,8 +742,17 @@
   amountInput.addEventListener('input', recalc);
   bookingDateInput.addEventListener('input', recalc);
 
-  renderRateTable();
-  recalc();
+  fetch('./config.json')
+    .then(r => r.json())
+    .then(config => {
+      CONFIG = config;
+      renderRateTable();
+      recalc();
+    })
+    .catch(err => {
+      explainText.textContent = 'Unable to load current rate configuration. Please refresh, or contact support if this persists.';
+      console.error('Failed to load config.json', err);
+    });
 </script>
 </body>
 </html>
