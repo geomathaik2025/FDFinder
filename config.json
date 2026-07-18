@@ -1,0 +1,12 @@
+{
+  "baseRate1Yr": 6.75,
+  "seniorAdd": 0.50,
+  "sakhiAdd": 0.10,
+  "newYearSale": {
+    "baseRate": 7.60,
+    "seniorMultiplier": 1.25,
+    "sakhiMultiplier": 1.25,
+    "windowStart": "2027-01-01",
+    "windowEnd": "2027-12-31"
+  }
+}
