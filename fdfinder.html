@@ -601,7 +601,7 @@
   // independent of BASE_RATE_1YR, so this scenario's bug stays isolated from the other one).
   const NEWYEAR_FALLBACK_BASE_RATE = 6.75;
   const WINDOW_START = '2027-01-01';
-  const WINDOW_END = '2027-01-31'; // This line is correct for the original problem description, but the issue arises because the test case uses a date outside the window. The actual bug is in the test case interpretation, not the code. However, to fix the code for the reported issue, the window should be adjusted if the problem persists with valid dates.
+  const WINDOW_END = '2017-01-31'; // This line is correct for the original problem description, but the issue arises because the test case uses a date outside the window. The actual bug is in the test case interpretation, not the code. However, to fix the code for the reported issue, the window should be adjusted if the problem persists with valid dates.
 
   function formatINR(num){
     return '₹' + Number(num).toLocaleString('en-IN', {maximumFractionDigits: 2, minimumFractionDigits: 0});
