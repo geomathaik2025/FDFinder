@@ -612,17 +612,17 @@
     const sakhi = gender === 'female';
 
     if(tenure === 'newyear'){
-      if(bookingDate >= WINDOW_START){
-        let rate = NEWYEAR_BASE_RATE;
-        if(senior) rate *= NEWYEAR_SENIOR_MULTIPLIER;
-        if(sakhi) rate *= NEWYEAR_SAKHI_MULTIPLIER;
-        return rate;
-      } else {
-        let rate = BASE_RATE_1YR;
-        if(senior) rate += SENIOR_ADD;
-        if(sakhi) rate += SAKHI_ADD;
-        return rate;
-      }
+if(tenure === 'newyear') {
+  let rate = NEWYEAR_BASE_RATE;
+  if(senior) rate *= NEWYEAR_SENIOR_MULTIPLIER;
+  if(sakhi) rate *= NEWYEAR_SAKHI_MULTIPLIER;
+  return rate;
+} else {
+  let rate = BASE_RATE_1YR;
+  if(senior) rate += SENIOR_ADD;
+  if(sakhi) rate += SAKHI_ADD;
+  return rate;
+}
     }
 
     let rate = BASE_RATE_1YR;
